@@ -54,7 +54,7 @@ VERSION = "0.1"
 DEFAULT_WARNING = '10'
 DEFAULT_CRITICAL = '60'
 
-
+NTPQ_PATH=r"""/usr/sbin/ntpq"""
 
 
 DEFAULT_DELAY_WARNING = '0.100' # 100 ms
@@ -70,7 +70,8 @@ def get_ntp_sync(client):
     # 127.127.1.0     .LOCL.          10 l   53   64  377    0.000    0.000   0.001
     # *blabla   blabla                 3 u  909 1024  377    0.366   -3.200   5.268
      
-    raw = r"""/usr/sbin/ntpq -p"""
+    #raw = r"""/usr/sbin/ntpq -p"""
+    raw = "%s -p" % NTPQ_PATH
     stdin, stdout, stderr = client.exec_command("export LC_LANG=C && unset LANG && %s" % raw)
 
     errs = ''.join(l for l in stderr)
@@ -154,15 +155,14 @@ parser.add_option('-u', '--user',
                   dest="user", help='remote use to use. By default shinken.')
 parser.add_option('-P', '--passphrase',
                   dest="passphrase", help='SSH key passphrase. By default will use void')
-
 parser.add_option('-w', '--warning',
                   dest="warning", help='Warning delay for ntp, like 10. couple delay,offset value for chrony 0.100,0.0025')
 parser.add_option('-c', '--critical',
                   dest="critical", help='Warning delay for ntp, like 10. couple delay,offset value for chrony 0.150,0.005')
-
 parser.add_option('-C', '--chrony',  action='store_true',
                   dest="chrony", help='check Chrony instead of ntpd')
-
+parser.add_option('-n', '--ntpq',
+                  dest="ntpq", help="remote ntpq bianry path")
 
 
 if __name__ == '__main__':
@@ -175,6 +175,10 @@ if __name__ == '__main__':
     if not hostname:
         print "Error : hostname parameter (-H) is mandatory"
         sys.exit(2)
+
+    ntpq = opts.ntpq
+    if ntpq:
+        NTPQ_PATH=ntpq
 
     ssh_key_file = opts.ssh_key_file or os.path.expanduser('~/.ssh/id_rsa')
     user = opts.user or 'shinken'

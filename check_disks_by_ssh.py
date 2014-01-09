@@ -54,7 +54,7 @@ except ImportError:
 VERSION = "0.1"
 DEFAULT_WARNING = '75%'
 DEFAULT_CRITICAL = '90%'
-
+MOUNTS = None 
 
 def get_df(client):
     # We are looking for a line like 
@@ -85,7 +85,12 @@ def get_df(client):
         # Ok maybe we got a none or tmpfs system, if so, bailout
         if _type in ['tmpfs', 'devtmpfs']:
             continue
-        
+
+        #if we specify a list of mountpoints to check then verify that current line is in the list
+        if MOUNTS:
+            if not tmp[6] in MOUNTS:
+                continue 
+
         # Ok now grep values
         fs =  tmp[0]
         size = int(tmp[2])*1024
@@ -118,6 +123,8 @@ parser.add_option('-w', '--warning',
                   dest="warning", help='Warning value for physical used memory. In percent. Default : 75%')
 parser.add_option('-c', '--critical',
                   dest="critical", help='Critical value for physical used memory. In percent. Must be superior to warning value. Default : 90%')
+parser.add_option('-m', '--mount-points',
+                  dest="mounts", help='comma separated list of mountpoints to check. Default all mount points except of tmpfs types')
 
 
 if __name__ == '__main__':
@@ -130,6 +137,10 @@ if __name__ == '__main__':
     if not hostname:
         print "Error : hostname parameter (-H) is mandatory"
         sys.exit(2)
+
+    mounts = opts.mounts.split(',')
+    if mounts:
+        MOUNTS=mounts
 
     ssh_key_file = opts.ssh_key_file or os.path.expanduser('~/.ssh/id_rsa')
     user = opts.user or 'shinken'

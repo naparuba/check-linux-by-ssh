@@ -151,8 +151,8 @@ if __name__ == '__main__':
         print "Error : hostname parameter (-H) is mandatory"
         sys.exit(2)
 
-    mounts = opts.mounts.split(',')
-    if mounts:
+    if opt.mounts:
+        mounts = opts.mounts.split(',')
         MOUNTS=mounts
 
     ssh_key_file = opts.ssh_key_file or os.path.expanduser('~/.ssh/id_rsa')

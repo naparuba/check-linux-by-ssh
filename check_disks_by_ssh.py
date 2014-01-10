@@ -55,6 +55,18 @@ VERSION = "0.1"
 DEFAULT_WARNING = '75%'
 DEFAULT_CRITICAL = '90%'
 
+UNITS= {'B': 0,
+        'KB': 1,
+        'MB': 2,
+        'GB': 3,
+        'TB': 4
+        }
+
+def convert_to(unit,value):
+    power = 0
+    if unit in UNITS:
+        power = UNITS[unit]
+    return round(float(value)/(1024**power), power)
 
 def get_df(client):
     # We are looking for a line like 
@@ -118,6 +130,8 @@ parser.add_option('-w', '--warning',
                   dest="warning", help='Warning value for physical used memory. In percent. Default : 75%')
 parser.add_option('-c', '--critical',
                   dest="critical", help='Critical value for physical used memory. In percent. Must be superior to warning value. Default : 90%')
+parser.add_option('-U', '--unit',
+                  dest="unit", help='Unit of Disk Space. B, KB, GB, TB. Default : B')
 
 
 if __name__ == '__main__':
@@ -140,6 +154,9 @@ if __name__ == '__main__':
     s_critical = opts.critical or DEFAULT_CRITICAL
     warning, critical = schecks.get_warn_crit(s_warning, s_critical)
 
+    # Get Unit 
+    s_unit = opts.unit or 'B'
+
     # Ok now connect, and try to get values for memory
     client = schecks.connect(hostname, ssh_key_file, passphrase, user)
     dfs = get_df(client)
@@ -153,15 +170,15 @@ if __name__ == '__main__':
     status = 0 # all is green until it is no more ok :)
     bad_volumes = []
     for (mount, df) in dfs.iteritems():
-        size = df['size']
-        used = df['used']
-        used_pct = df['used_pct']
+        size = convert_to(s_unit,df['size'])
+        used = convert_to(s_unit,df['used'])
+        used_pct =  df['used_pct']
         # Let first dump the perfdata
         
-        _size_warn = int(size * float(warning)/100)
-        _size_crit = int(size * float(critical)/100)
+        _size_warn = convert_to(s_unit,df['size'] * float(warning)/100)
+        _size_crit = convert_to(s_unit,df['size'] * float(critical)/100)
         
-        perfdata += '"%s_used_pct"=%s%%;%s%%;%s%%;0%%;100%% "%s_used"=%s;%s;%s;0;%s ' % (mount, used_pct, warning, critical, mount, used, _size_warn, _size_crit, size)
+        perfdata += '"%s_used_pct"=%s%%;%s%%;%s%%;0%%;100%% "%s_used"=%s%s;%s;%s;0;%s ' % (mount, used_pct, warning, critical, mount, used, s_unit, _size_warn, _size_crit, size)
         
         # And compare to limits
         if used_pct >= critical:

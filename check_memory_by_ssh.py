@@ -146,7 +146,7 @@ if __name__ == '__main__':
         # For used we sould set warning,critical value in perfdata
         _warn, _crit = '', ''
         if k == 'consumed':
-            _warn, _crit = str(warning)+'%%', str(critical)+'%%'
+            _warn, _crit = str(warning)+'%', str(critical)+'%'
         perfdata += ' %s=%s%%;%s;%s;0%%;100%%' % (k, int(100 * float(v)/total), _warn, _crit)
 
     # Add swap if required (actually no check supported)

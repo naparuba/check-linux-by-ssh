@@ -99,9 +99,16 @@ def get_df(client):
             continue
 
         #if we specify a list of mountpoints to check then verify that current line is in the list
+        to_check = True
         if MOUNTS:
-            if not tmp[6] in MOUNTS:
-                continue 
+            to_check = False
+            for mnt in MOUNTS:
+                if tmp[6].startswith(mnt):
+                    to_check = True
+        
+        # Maybe this mount point did not match any required mount point
+        if not to_check:
+            continue
 
         # Ok now grep values
         fs =  tmp[0]
@@ -151,7 +158,7 @@ if __name__ == '__main__':
         print "Error : hostname parameter (-H) is mandatory"
         sys.exit(2)
 
-    if opt.mounts:
+    if opts.mounts:
         mounts = opts.mounts.split(',')
         MOUNTS=mounts
 

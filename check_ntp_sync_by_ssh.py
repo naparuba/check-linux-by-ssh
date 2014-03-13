@@ -54,7 +54,7 @@ VERSION = "0.1"
 DEFAULT_WARNING = '10'
 DEFAULT_CRITICAL = '60'
 
-NTPQ_PATH=r"""/usr/sbin/ntpq"""
+NTPQ_PATH=r"""ntpq"""
 
 
 DEFAULT_DELAY_WARNING = '0.100' # 100 ms

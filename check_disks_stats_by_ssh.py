@@ -171,7 +171,7 @@ if __name__ == '__main__':
     
     # Maybe we failed at getting data
     if not stats:
-        print "Error : cannot fetch cpu stats values from host"
+        print "Error : cannot fetch disk stats values from host"
         sys.exit(2)
 
     # We are putting diff into float so we are sure we will have float everywhere

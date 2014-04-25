@@ -131,21 +131,30 @@ def get_df(client):
 parser = optparse.OptionParser(
     "%prog [options]", version="%prog " + VERSION)
 parser.add_option('-H', '--hostname',
-                  dest="hostname", help='Hostname to connect to')
+    dest="hostname", help='Hostname to connect to')
 parser.add_option('-i', '--ssh-key',
-                  dest="ssh_key_file", help='SSH key file to use. By default will take ~/.ssh/id_rsa.')
+    dest="ssh_key_file",
+    help='SSH key file to use. By default will take ~/.ssh/id_rsa.')
+parser.add_option('-p', '--port',
+    dest="port", type="int", default=22,
+    help='SSH port to connect to. Default : 22')
 parser.add_option('-u', '--user',
-                  dest="user", help='remote use to use. By default shinken.')
+    dest="user", help='remote use to use. By default shinken.')
 parser.add_option('-P', '--passphrase',
-                  dest="passphrase", help='SSH key passphrase. By default will use void')
+    dest="passphrase", help='SSH key passphrase. By default will use void')
 parser.add_option('-w', '--warning',
-                  dest="warning", help='Warning value for physical used memory. In percent. Default : 75%')
+    dest="warning",
+    help='Warning value for physical used memory. In percent. Default : 75%')
 parser.add_option('-c', '--critical',
-                  dest="critical", help='Critical value for physical used memory. In percent. Must be superior to warning value. Default : 90%')
+    dest="critical",
+    help='Critical value for physical used memory. In percent. Must be '
+        'superior to warning value. Default : 90%')
 parser.add_option('-m', '--mount-points',
-                  dest="mounts", help='comma separated list of mountpoints to check. Default all mount points except of tmpfs types')
+    dest="mounts",
+    help='comma separated list of mountpoints to check. Default all mount '
+        'points except of tmpfs types')
 parser.add_option('-U', '--unit',
-                  dest="unit", help='Unit of Disk Space. B, KB, GB, TB. Default : B')
+    dest="unit", help='Unit of Disk Space. B, KB, GB, TB. Default : B')
 
 if __name__ == '__main__':
     # Ok first job : parse args
@@ -157,7 +166,7 @@ if __name__ == '__main__':
     if not hostname:
         print "Error : hostname parameter (-H) is mandatory"
         sys.exit(2)
-
+    port = opts.port
     if opts.mounts:
         mounts = opts.mounts.split(',')
         MOUNTS=mounts
@@ -175,7 +184,7 @@ if __name__ == '__main__':
     s_unit = opts.unit or 'B'
 
     # Ok now connect, and try to get values for memory
-    client = schecks.connect(hostname, ssh_key_file, passphrase, user)
+    client = schecks.connect(hostname, port, ssh_key_file, passphrase, user)
     dfs = get_df(client)
     
     # Maybe we failed at getting data

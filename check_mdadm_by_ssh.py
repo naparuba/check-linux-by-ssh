@@ -138,13 +138,13 @@ if __name__ == '__main__':
     if not hostname:
         print "Error : hostname parameter (-H) is mandatory"
         sys.exit(2)
-
+    port = opts.port
     ssh_key_file = opts.ssh_key_file or os.path.expanduser('~/.ssh/id_rsa')
     user = opts.user or 'shinken'
     passphrase = opts.passphrase or ''
 
     # Ok now connect, and try to get values for memory
-    client = schecks.connect(hostname, ssh_key_file, passphrase, user)
+    client = schecks.connect(hostname, port, ssh_key_file, passphrase, user)
 
     # Scrape /proc/mdstat and get result and perf data
     raid_statistics = get_raid_status(client)

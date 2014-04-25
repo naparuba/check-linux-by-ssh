@@ -36,7 +36,7 @@ except ImportError:
     sys.exit(2)
 
 
-def connect(hostname, ssh_key_file, passphrase, user):
+def connect(hostname, port, ssh_key_file, passphrase, user):
     if not os.path.exists(os.path.expanduser(ssh_key_file)):
         err = "Error : missing ssh key file. please specify it with -i parameter"
         raise Exception(err)
@@ -46,7 +46,8 @@ def connect(hostname, ssh_key_file, passphrase, user):
     client.load_system_host_keys()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy()) 
     try:
-        client.connect(hostname, username=user, key_filename=ssh_key_file, password=passphrase)
+        client.connect(hostname, port=port, username=user,
+                       key_filename=ssh_key_file, password=passphrase)
     except Exception, exp:
         err = "Error : connexion failed '%s'" % exp
         raise Exception(err)

@@ -99,22 +99,29 @@ def get_processes(client):
 parser = optparse.OptionParser(
     "%prog [options]", version="%prog " + VERSION)
 parser.add_option('-H', '--hostname',
-                  dest="hostname", help='Hostname to connect to')
+    dest="hostname", help='Hostname to connect to')
+parser.add_option('-p', '--port',
+    dest="port", type="int", default=22,
+    help='SSH port to connect to. Default : 22')
 parser.add_option('-i', '--ssh-key',
-                  dest="ssh_key_file", help='SSH key file to use. By default will take ~/.ssh/id_rsa.')
+    dest="ssh_key_file",
+    help='SSH key file to use. By default will take ~/.ssh/id_rsa.')
 parser.add_option('-u', '--user',
-                  dest="user", help='remote use to use. By default shinken.')
+    dest="user", help='remote use to use. By default shinken.')
 parser.add_option('-P', '--passphrase',
-                  dest="passphrase", help='SSH key passphrase. By default will use void')
+    dest="passphrase", help='SSH key passphrase. By default will use void')
 parser.add_option('-w', '--warning',
-                  dest="warning", help='Warning value for RSS used memory. In MB. Default : 100')
+    dest="warning",
+    help='Warning value for RSS used memory. In MB. Default : 100')
 parser.add_option('-c', '--critical',
-                  dest="critical", help='Critical value for RSS used memory. In MB. Must be superior to warning value. Default : 200')
+    dest="critical",
+    help='Critical value for RSS used memory. In MB. Must be superior to '
+        'warning value. Default : 200')
 # Specific parameters
 parser.add_option('-C', '--command',
-                  dest="command", help='Command name to match for the check')
+    dest="command", help='Command name to match for the check')
 parser.add_option('-S', '--sum', action='store_true',
-                  dest="sum_all", help='Sum all consomtion of matched processes for the check')
+    dest="sum_all", help='Sum all consomtion of matched processes for the check')
 
 
 
@@ -128,7 +135,7 @@ if __name__ == '__main__':
     if not hostname:
         print "Error : hostname parameter (-H) is mandatory"
         sys.exit(2)
-
+    port = opts.port
     command = opts.command
     # Look if we need to sum all value from the process match or not
     sum_all = opts.sum_all
@@ -147,7 +154,7 @@ if __name__ == '__main__':
 
 
     # Ok now connect, and try to get values for memory
-    client = schecks.connect(hostname, ssh_key_file, passphrase, user)
+    client = schecks.connect(hostname, port, ssh_key_file, passphrase, user)
     pss = get_processes(client)
     
     # Maybe we failed at getting data

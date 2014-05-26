@@ -25,7 +25,7 @@
 
 
 '''
- This script is a check for lookup at another perf data check over ssh without
+ This script is a check for lookup at another check over ssh without
  having an agent on the other side
 '''
 import os

@@ -71,6 +71,9 @@ parser = optparse.OptionParser(
     "%prog [options]", version="%prog " + VERSION)
 parser.add_option('-H', '--hostname',
                   dest="hostname", help='Hostname to connect to')
+parser.add_option('-p', '--port',
+    dest="port", type="int", default=22,
+    help='SSH port to connect to. Default : 22')
 parser.add_option('-i', '--ssh-key',
                   dest="ssh_key_file", help='SSH key file to use. By default will take ~/.ssh/id_rsa.')
 parser.add_option('-u', '--user',
@@ -96,13 +99,13 @@ if __name__ == '__main__':
     if not check_path:
         print "Error : check_path parameter (--check_path) is mandatory"
         sys.exit(2)
-
+    port = opts.port
     ssh_key_file = opts.ssh_key_file or os.path.expanduser('~/.ssh/id_rsa')
     user = opts.user or 'shinken'
     passphrase = opts.passphrase or ''
 
     # Ok now connect, and try to get values for memory
-    client = schecks.connect(hostname, ssh_key_file, passphrase, user)
+    client = schecks.connect(hostname, port, ssh_key_file, passphrase, user)
     result = execute_check(client, check_path)
 
     print result

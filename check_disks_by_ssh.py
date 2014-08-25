@@ -95,7 +95,7 @@ def get_df(client):
         
         _type = tmp[1]
         # Ok maybe we got a none or tmpfs system, if so, bailout
-        if _type in ['tmpfs', 'devtmpfs']:
+        if _type in ['tmpfs', 'devtmpfs', 'iso9660']:
             continue
 
         #if we specify a list of mountpoints to check then verify that current line is in the list

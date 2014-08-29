@@ -82,7 +82,7 @@ def get_ntp_sync(client):
         if not line or not line.startswith('*'):
             continue
         tmp = [e for e in line.split(' ') if e]
-        ref_delay = abs(float(tmp[8]))
+        ref_delay = abs(float(tmp[8])) / 1000
             
     # Before return, close the client
     client.close()

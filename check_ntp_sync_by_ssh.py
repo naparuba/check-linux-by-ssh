@@ -31,8 +31,6 @@
 import os
 import sys
 import optparse
-import base64
-import subprocess
 
 # Ok try to load our directory to load the plugin utils.
 my_dir = os.path.dirname(__file__)
@@ -143,29 +141,29 @@ def get_chrony_sync(client):
 parser = optparse.OptionParser(
     "%prog [options]", version="%prog " + VERSION)
 parser.add_option('-H', '--hostname',
-    dest="hostname", help='Hostname to connect to')
+                  dest="hostname", help='Hostname to connect to')
 parser.add_option('-p', '--port',
-    dest="port", type="int", default=22,
-    help='SSH port to connect to. Default : 22')
+                  dest="port", type="int", default=22,
+                  help='SSH port to connect to. Default : 22')
 parser.add_option('-i', '--ssh-key',
-    dest="ssh_key_file",
-    help='SSH key file to use. By default will take ~/.ssh/id_rsa.')
+                  dest="ssh_key_file",
+                  help='SSH key file to use. By default will take ~/.ssh/id_rsa.')
 parser.add_option('-u', '--user',
-    dest="user", help='remote use to use. By default shinken.')
+                  dest="user", help='remote use to use. By default shinken.')
 parser.add_option('-P', '--passphrase',
-    dest="passphrase", help='SSH key passphrase. By default will use void')
+                  dest="passphrase", help='SSH key passphrase. By default will use void')
 parser.add_option('-w', '--warning',
-    dest="warning",
-    help='Warning delay for ntp, like 10. couple delay,offset value for chrony '
-        '0.100,0.0025')
+                  dest="warning",
+                  help='Warning delay for ntp, like 10. couple delay,offset value for chrony '
+                  '0.100,0.0025')
 parser.add_option('-c', '--critical',
-    dest="critical",
-    help='Warning delay for ntp, like 10. couple delay,offset value for chrony '
-        '0.150,0.005')
+                  dest="critical",
+                  help='Warning delay for ntp, like 10. couple delay,offset value for chrony '
+                  '0.150,0.005')
 parser.add_option('-C', '--chrony',  action='store_true',
-    dest="chrony", help='check Chrony instead of ntpd')
+                  dest="chrony", help='check Chrony instead of ntpd')
 parser.add_option('-n', '--ntpq',
-    dest="ntpq", help="remote ntpq bianry path")
+                  dest="ntpq", help="remote ntpq bianry path")
 
 
 if __name__ == '__main__':

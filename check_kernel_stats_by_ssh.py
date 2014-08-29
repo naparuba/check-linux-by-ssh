@@ -32,8 +32,6 @@
 import os
 import sys
 import optparse
-import base64
-import subprocess
 
 # Ok try to load our directory to load the plugin utils.
 my_dir = os.path.dirname(__file__)
@@ -47,8 +45,6 @@ except ImportError:
 
 
 VERSION = "0.1"
-DEFAULT_WARNING = '75%'
-DEFAULT_CRITICAL = '90%'
 DEFAULT_TEMP_FILE = '/tmp/__check_kernel_stats_by_ssh.tmp'
 
 def get_kernel_stats(client):
@@ -132,24 +128,17 @@ def get_kernel_stats(client):
 parser = optparse.OptionParser(
     "%prog [options]", version="%prog " + VERSION)
 parser.add_option('-H', '--hostname',
-    dest="hostname", help='Hostname to connect to')
+                  dest="hostname", help='Hostname to connect to')
 parser.add_option('-p', '--port',
-    dest="port", type="int", default=22,
-    help='SSH port to connect to. Default : 22')
+                  dest="port", type="int", default=22,
+                  help='SSH port to connect to. Default : 22')
 parser.add_option('-i', '--ssh-key',
-    dest="ssh_key_file",
-    help='SSH key file to use. By default will take ~/.ssh/id_rsa.')
+                  dest="ssh_key_file",
+                  help='SSH key file to use. By default will take ~/.ssh/id_rsa.')
 parser.add_option('-u', '--user',
-    dest="user", help='remote use to use. By default shinken.')
+                  dest="user", help='remote use to use. By default shinken.')
 parser.add_option('-P', '--passphrase',
-    dest="passphrase", help='SSH key passphrase. By default will use void')
-parser.add_option('-w', '--warning',
-    dest="warning",
-    help='Warning value for physical used memory. In percent. Default : 75%')
-parser.add_option('-c', '--critical',
-    dest="critical",
-    help='Critical value for physical used memory. In percent. Must be '
-        'superior to warning value. Default : 90%')
+                  dest="passphrase", help='SSH key passphrase. By default will use void')
 
 
 if __name__ == '__main__':
@@ -165,18 +154,13 @@ if __name__ == '__main__':
     user = opts.user or 'shinken'
     passphrase = opts.passphrase or ''
 
-    # Try to get numeic warning/critical values
-    s_warning  = opts.warning or DEFAULT_WARNING
-    s_critical = opts.critical or DEFAULT_CRITICAL
-    warning, critical = schecks.get_warn_crit(s_warning, s_critical)
-
     # Ok now connect, and try to get values for memory
     client = schecks.connect(hostname, port, ssh_key_file, passphrase, user)
     diff, stats = get_kernel_stats(client)
     
     # Maybe we failed at getting data
     if not stats:
-        print "Error : cannot fetch cpu stats values from host"
+        print "Error : cannot fetch kernel stats values from host"
         sys.exit(2)
 
     # We are putting diff into float so we are sure we will have float everywhere

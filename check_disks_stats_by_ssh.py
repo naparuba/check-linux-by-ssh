@@ -32,8 +32,6 @@
 import os
 import sys
 import optparse
-import base64
-import subprocess
 
 # Ok try to load our directory to load the plugin utils.
 my_dir = os.path.dirname(__file__)
@@ -127,24 +125,24 @@ def get_disks_stats(client):
 parser = optparse.OptionParser(
     "%prog [options]", version="%prog " + VERSION)
 parser.add_option('-H', '--hostname',
-    dest="hostname", help='Hostname to connect to')
+                  dest="hostname", help='Hostname to connect to')
 parser.add_option('-p', '--port',
-    dest="port", type="int", default=22,
-    help='SSH port to connect to. Default : 22')
+                  dest="port", type="int", default=22,
+                  help='SSH port to connect to. Default : 22')
 parser.add_option('-i', '--ssh-key',
-    dest="ssh_key_file",
-    help='SSH key file to use. By default will take ~/.ssh/id_rsa.')
+                  dest="ssh_key_file",
+                  help='SSH key file to use. By default will take ~/.ssh/id_rsa.')
 parser.add_option('-u', '--user',
-    dest="user", help='remote use to use. By default shinken.')
+                  dest="user", help='remote use to use. By default shinken.')
 parser.add_option('-P', '--passphrase',
-    dest="passphrase", help='SSH key passphrase. By default will use void')
+                  dest="passphrase", help='SSH key passphrase. By default will use void')
 parser.add_option('-w', '--warning',
-    dest="warning",
-    help='Warning value for physical used memory. In percent. Default : 75%')
+                  dest="warning",
+                  help='Warning value for physical used memory. In percent. Default : 75%')
 parser.add_option('-c', '--critical',
-    dest="critical",
-    help='Critical value for physical used memory. In percent. Must be '
-        'superior to warning value. Default : 90%')
+                  dest="critical",
+                  help='Critical value for physical used memory. In percent. Must be '
+                  'superior to warning value. Default : 90%')
 
 
 if __name__ == '__main__':

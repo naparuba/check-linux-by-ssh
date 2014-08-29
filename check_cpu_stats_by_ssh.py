@@ -24,10 +24,6 @@
 #
 
 
-'''
- This script is a check for lookup at memory consumption over ssh without
- having an agent on the other side
-'''
 import os
 import sys
 import optparse
@@ -110,17 +106,17 @@ def get_mpstat(client):
 parser = optparse.OptionParser(
     "%prog [options]", version="%prog " + VERSION)
 parser.add_option('-H', '--hostname',
-    dest="hostname", help='Hostname to connect to')
+                  dest="hostname", help='Hostname to connect to')
 parser.add_option('-p', '--port',
-    dest="port", type="int", default=22,
-    help='SSH port to connect to. Default : 22')
+                  dest="port", type="int", default=22,
+                  help='SSH port to connect to. Default : 22')
 parser.add_option('-i', '--ssh-key',
-    dest="ssh_key_file",
-    help='SSH key file to use. By default will take ~/.ssh/id_rsa.')
+                  dest="ssh_key_file",
+                  help='SSH key file to use. By default will take ~/.ssh/id_rsa.')
 parser.add_option('-u', '--user',
-    dest="user", help='remote use to use. By default shinken.')
+                  dest="user", help='remote use to use. By default shinken.')
 parser.add_option('-P', '--passphrase',
-    dest="passphrase", help='SSH key passphrase. By default will use void')
+                  dest="passphrase", help='SSH key passphrase. By default will use void')
 
 
 if __name__ == '__main__':
@@ -144,7 +140,6 @@ if __name__ == '__main__':
     if not stats:
         print "Error : cannot fetch cpu stats values from host"
         sys.exit(3)
-
     
     perfdata = []
     for (cpu, v) in stats.iteritems():

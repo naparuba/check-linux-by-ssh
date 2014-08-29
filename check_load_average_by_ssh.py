@@ -25,14 +25,12 @@
 
 
 '''
- This script is a check for lookup at memory consumption over ssh without
+ This script is a check for lookup at load average over ssh without
  having an agent on the other side
 '''
 import os
 import sys
 import optparse
-import base64
-import subprocess
 
 # Ok try to load our directory to load the plugin utils.
 my_dir = os.path.dirname(__file__)
@@ -72,35 +70,31 @@ def get_load(client):
 
 
 
-
-
 parser = optparse.OptionParser(
     "%prog [options]", version="%prog " + VERSION)
 parser.add_option('-H', '--hostname',
-    dest="hostname", help='Hostname to connect to')
+                  dest="hostname", help='Hostname to connect to')
 parser.add_option('-p', '--port',
-    dest="port", type="int", default=22,
-    help='SSH port to connect to. Default : 22')
+                  dest="port", type="int", default=22,
+                  help='SSH port to connect to. Default : 22')
 parser.add_option('-i', '--ssh-key',
-    dest="ssh_key_file",
-    help='SSH key file to use. By default will take ~/.ssh/id_rsa.')
+                  dest="ssh_key_file",
+                  help='SSH key file to use. By default will take ~/.ssh/id_rsa.')
 parser.add_option('-u', '--user',
-    dest="user", help='remote use to use. By default shinken.')
+                  dest="user", help='remote use to use. By default shinken.')
 parser.add_option('-P', '--passphrase',
-    dest="passphrase", help='SSH key passphrase. By default will use void')
+                  dest="passphrase", help='SSH key passphrase. By default will use void')
 parser.add_option('-w', '--warning',
-    dest="warning",
-    help='Warning value for physical used memory. In percent. Default : 75%')
+                  dest="warning",
+                  help='Warning value for load average, as 3 values, for 1m,5m,15m. Default : 1,1,1')
 parser.add_option('-c', '--critical',
-    dest="critical",
-    help='Critical value for physical used memory. In percent. Must be '
-        'superior to warning value. Default : 90%')
+                  dest="critical",
+                  help='Critical value for load average, as 3 values, for 1m,5m,15m. Default : 2,2,2')
 parser.add_option('-C', '--cpu-based', action='store_true',
-    dest="cpu_based",
-    help='Set the warning/critical number of cpu based values. For example '
-        '1,1,1 will warn if the load if over the number of CPUs. '
-        'Default : False')
-
+                  dest="cpu_based",
+                  help='Set the warning/critical number of cpu based values. For example '
+                  '1,1,1 will warn if the load if over the number of CPUs. '
+                  'Default : False')
 
 
 if __name__ == '__main__':

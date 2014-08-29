@@ -44,9 +44,6 @@ except ImportError:
 
 
 VERSION = "0.1"
-DEFAULT_WARNING = '75%'
-DEFAULT_CRITICAL = '90%'
-
 
 def get_mpstat(client):
     # We are looking for such lines:
@@ -124,13 +121,6 @@ parser.add_option('-u', '--user',
     dest="user", help='remote use to use. By default shinken.')
 parser.add_option('-P', '--passphrase',
     dest="passphrase", help='SSH key passphrase. By default will use void')
-parser.add_option('-w', '--warning',
-    dest="warning",
-    help='Warning value for physical used memory. In percent. Default : 75%')
-parser.add_option('-c', '--critical',
-    dest="critical",
-    help='Critical value for physical used memory. In percent. Must be '
-        'superior to warning value. Default : 90%')
 
 
 if __name__ == '__main__':
@@ -145,11 +135,6 @@ if __name__ == '__main__':
     ssh_key_file = opts.ssh_key_file or os.path.expanduser('~/.ssh/id_rsa')
     user = opts.user or 'shinken'
     passphrase = opts.passphrase or ''
-
-    # Try to get numeic warning/critical values
-    s_warning  = opts.warning or DEFAULT_WARNING
-    s_critical = opts.critical or DEFAULT_CRITICAL
-    warning, critical = schecks.get_warn_crit(s_warning, s_critical)
 
     # Ok now connect, and try to get values for memory
     client = schecks.connect(hostname, port, ssh_key_file, passphrase, user)

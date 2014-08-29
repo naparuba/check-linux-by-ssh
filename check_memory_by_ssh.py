@@ -34,11 +34,6 @@ import sys
 import optparse
 import base64
 import subprocess
-try:
-    import paramiko
-except ImportError:
-    print "ERROR : this plugin needs the python-paramiko module. Please install it"
-    sys.exit(2)
 
 # Ok try to load our directory to load the plugin utils.
 my_dir = os.path.dirname(__file__)
@@ -122,11 +117,9 @@ if __name__ == '__main__':
     if args:
         parser.error("Does not accept any argument.")
 
-    hostname = opts.hostname
-    if not hostname:
-        print "Error : hostname parameter (-H) is mandatory"
-        sys.exit(2)
     port = opts.port
+    hostname = opts.hostname or ''
+
     ssh_key_file = opts.ssh_key_file or os.path.expanduser('~/.ssh/id_rsa')
     user = opts.user or 'shinken'
     passphrase = opts.passphrase or ''

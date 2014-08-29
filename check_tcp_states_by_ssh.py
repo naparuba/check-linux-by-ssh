@@ -30,13 +30,6 @@
 import os
 import sys
 import optparse
-import base64
-import subprocess
-try:
-    import paramiko
-except ImportError:
-    print "ERROR : this plugin needs the python-paramiko module. Please install it"
-    sys.exit(2)
 
 # Ok try to load our directory to load the plugin utils.
 my_dir = os.path.dirname(__file__)
@@ -91,19 +84,7 @@ parser.add_option('-i', '--ssh-key',
 parser.add_option('-u', '--user',
     dest="user", help='remote use to use. By default shinken.')
 parser.add_option('-P', '--passphrase',
-    dest="passphrase", help='SSH key passphrase. By default will use void')
-parser.add_option('-w', '--warning',
-    dest="warning",
-    help='Warning value for physical used memory. In percent. Default : 75%')
-parser.add_option('-c', '--critical',
-    dest="critical",
-    help='Critical value for physical used memory. In percent. Must be '
-        'superior to warning value. Default : 90%')
-parser.add_option('-C', '--cpu-based', action='store_true',
-    dest="cpu_based",
-    help='Set the warning/critical number of cpu based values. For example '
-        '1,1,1 will warn if the load if over the number of CPUs. '
-        'Default : False')
+                  dest="passphrase", help='SSH key passphrase. By default will use void')
 
 
 
@@ -113,26 +94,12 @@ if __name__ == '__main__':
     if args:
         parser.error("Does not accept any argument.")
 
-    hostname = opts.hostname
-    if not hostname:
-        print "Error : hostname parameter (-H) is mandatory"
-        sys.exit(2)
     port = opts.port
+    hostname = opts.hostname or ''
+    
     ssh_key_file = opts.ssh_key_file or os.path.expanduser('~/.ssh/id_rsa')
     user = opts.user or 'shinken'
     passphrase = opts.passphrase or ''
-
-    # Try to get numeic warning/critical values
-    s_warning  = opts.warning or DEFAULT_WARNING
-    s_critical = opts.critical or DEFAULT_CRITICAL
-    
-    # For warning/critical : or we got a int triplet, or a float*nb_cpu values
-    cpu_based = opts.cpu_based or False
-    if s_warning.count(',') != 2 or s_critical.count(',') != 2:
-        print "Error: warning and/or critical values do not match type. Please fix it (-w and -c)"
-        sys.exit(2)
-    warning  = [float(v) for v in s_warning.split(',')]
-    critical = [float(v) for v in s_critical.split(',')]
         
     # Ok now connect, and try to get values for memory
     client = schecks.connect(hostname, port, ssh_key_file, passphrase, user)

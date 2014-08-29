@@ -29,14 +29,50 @@
 '''
 import os
 import sys
+import subprocess
+
 try:
     import paramiko
 except ImportError:
-    print "ERROR : this plugin needs the python-paramiko module. Please install it"
-    sys.exit(2)
+    paramiko = None
 
+# If we are in local, we will allow us to avoid to run with ssh
+def is_local(hostname):
+    if hostname == '127.0.0.1' or hostname == '':
+        return True
+    return False
+
+
+class LocalExec(object):
+    def __init__(self):
+        pass
+
+    def close(self):
+        pass
+
+    def exec_command(self, command):
+        cmd = command.encode('utf8', 'ignore')
+        try:
+            process = subprocess.Popen(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                close_fds=True, shell=True, preexec_fn=os.setsid)
+            stdout, stderr = process.communicate()
+        except OSError, exp:
+            stderr = exp.__str__()
+            stdout = stdin = ''
+        return '',stdout.splitlines(),stderr.splitlines()
+    
 
 def connect(hostname, port, ssh_key_file, passphrase, user):
+    # If we are in a localhost case, don't play with ssh
+    if is_local(hostname):
+        return LocalExec()
+
+    # Maybe paramiko is missing, but now we relly need ssh...
+    if paramiko is None:
+        print "ERROR : this plugin needs the python-paramiko module. Please install it"
+        sys.exit(2)
+    
     if not os.path.exists(os.path.expanduser(ssh_key_file)):
         err = "Error : missing ssh key file. please specify it with -i parameter"
         raise Exception(err)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (C) 2013:
+# Copyright (C) 2013-:
 #     Gabes Jean, naparuba@gmail.com
 #     Pasche Sebastien, sebastien.pasche@leshop.ch
 #
@@ -26,25 +26,15 @@
 
 
 '''
- This script is a check for lookup at memory consumption over ssh without
- having an agent on the other side
+ This script is a check for lookup at disks consumption
 '''
 import os
 import sys
-import optparse
 
-# Ok try to load our directory to load the plugin utils.
-my_dir = os.path.dirname(__file__)
-sys.path.insert(0, my_dir)
-
-try:
-    import schecks
-except ImportError:
-    print "ERROR : this plugin needs the local schecks.py lib. Please install it"
-    sys.exit(2)
+import schecks
 
 
-VERSION = "0.1"
+
 DEFAULT_WARNING = '75%'
 DEFAULT_CRITICAL = '90%'
 DEFAULT_TEMP_FILE = '/tmp/__check_disks_stats_by_ssh.tmp'
@@ -119,55 +109,46 @@ def get_disks_stats(client):
     return diff, stats
 
 
-
-
-
-parser = schecks.get_parser()
-
-if __name__ == '__main__':
-    # Ok first job : parse args
-    opts, args = parser.parse_args()
-
-    # Ok now got an object that link to our destination
-    client = schecks.get_client(opts)
-
-    # Do the job
-    diff, stats = get_disks_stats(client)
+class Check(schecks.GenCheck):
+    def do_check(self):
+        # Do the job
+        diff, stats = get_disks_stats(self.client)
     
-    # Maybe we failed at getting data
-    if not stats:
-        print "Error : cannot fetch disk stats values from host"
-        sys.exit(2)
+        # Maybe we failed at getting data
+        if not stats:
+            self.set("Error : cannot fetch disk stats values from host", 2)
+            return
     
-    # We are putting diff into float so we are sure we will have float everywhere
-    diff = float(diff)
+        # We are putting diff into float so we are sure we will have float everywhere
+        diff = float(diff)
     
-    perfdata = []
-    for (device, v) in stats.iteritems():
-        if len(v) < 2:
-            # Ok maybe this disk just disapears or pop up, not a problem
-            continue
-        # First the previous ones
-        p_nb_reads, p_nb_sec_read, p_nb_writes, p_nb_sec_write, p_io_time = v.pop(0)
-        n_nb_reads, n_nb_sec_read, n_nb_writes, n_nb_sec_write, n_io_time = v.pop(0)
+        perfdata = []
         
-        # We want only positive values, if not, means that ther ewas a problem
-        # like a reboot for example, so counters are back to 0
-        d_nb_reads = max(0, n_nb_reads - p_nb_reads) / diff
-        d_nb_writes = max(0, n_nb_writes - p_nb_writes) / diff
-        # 512K sectors from now
-        d_nb_sec_read = 512/1024.0 * max(0, n_nb_sec_read - p_nb_sec_read) / diff
-        d_nb_sec_write = 512/1024.0 * max(0, n_nb_sec_write - p_nb_sec_write) / diff
-        # Ok for this one, the values are in millisec, and we want the % for the last diff period
-        d_io_time = min(100.0, (max(0, n_io_time - p_io_time) / diff) / 10)
+        for (device, v) in stats.iteritems():
+            if len(v) < 2:
+                # Ok maybe this disk just disapears or pop up, not a problem
+                continue
+            # First the previous ones
+            p_nb_reads, p_nb_sec_read, p_nb_writes, p_nb_sec_write, p_io_time = v.pop(0)
+            n_nb_reads, n_nb_sec_read, n_nb_writes, n_nb_sec_write, n_io_time = v.pop(0)
+        
+            # We want only positive values, if not, means that ther ewas a problem
+            # like a reboot for example, so counters are back to 0
+            d_nb_reads = max(0, n_nb_reads - p_nb_reads) / diff
+            d_nb_writes = max(0, n_nb_writes - p_nb_writes) / diff
+            # 512K sectors from now
+            d_nb_sec_read = 512/1024.0 * max(0, n_nb_sec_read - p_nb_sec_read) / diff
+            d_nb_sec_write = 512/1024.0 * max(0, n_nb_sec_write - p_nb_sec_write) / diff
+            # Ok for this one, the values are in millisec, and we want the % for the last diff period
+            d_io_time = min(100.0, (max(0, n_io_time - p_io_time) / diff) / 10)
         
         
-        # Ok Now it's what we did all of this : dump the io stats!
-        perfdata.append('%s_%s=%dr/s' % (device, "r_by_sec", d_nb_reads))
-        perfdata.append('%s_%s=%dw/s' % (device, "w_by_sec", d_nb_writes))
-        perfdata.append('%s_%s=%drKB/s' % (device, "rKB_by_sec", d_nb_sec_read))
-        perfdata.append('%s_%s=%dwKB/s' % (device, "wKB_by_sec", d_nb_sec_write))
-        perfdata.append('%s_%s=%.2f%%' % (device, "util", d_io_time))
+            # Ok Now it's what we did all of this : dump the io stats!
+            perfdata.append('%s_%s=%dr/s' % (device, "r_by_sec", d_nb_reads))
+            perfdata.append('%s_%s=%dw/s' % (device, "w_by_sec", d_nb_writes))
+            perfdata.append('%s_%s=%drKB/s' % (device, "rKB_by_sec", d_nb_sec_read))
+            perfdata.append('%s_%s=%dwKB/s' % (device, "wKB_by_sec", d_nb_sec_write))
+            perfdata.append('%s_%s=%.2f%%' % (device, "util", d_io_time))
     
-    print "OK | %s" % (' '.join(perfdata))
-    sys.exit(0)
+        self.set('OK', 0, ' '.join(perfdata))
+

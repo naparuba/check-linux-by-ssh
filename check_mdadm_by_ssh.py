@@ -31,13 +31,6 @@
 import os
 import sys
 import optparse
-import base64
-import subprocess
-try:
-    import paramiko
-except ImportError:
-    print "ERROR : this plugin needs the python-paramiko module. Please install it"
-    sys.exit(2)
 
 # Ok try to load our directory to load the plugin utils.
 my_dir = os.path.dirname(__file__)
@@ -63,8 +56,9 @@ def get_raid_status(client):
     # Result will be empty IF /proc/mdstat is found.
     check_mdstat = 'test -f /proc/mdstat || echo "null"'
     stdin, stdout, stderr = client.exec_command('export LC_LANG=C && unset LANG && %s' % check_mdstat)
-    result = stdout.readline()
-    if result:
+    lines = [line.strip() for line in stdout]
+    
+    if 'null' in lines:
         print "No MDRAID arrays found"
         sys.exit(0)
 
@@ -72,7 +66,8 @@ def get_raid_status(client):
     # Check to see if any md* arrays exist.
     get_devices = 'grep ^md -c /proc/mdstat'
     stdin, stdout, stderr = client.exec_command('export LC_LANG=C && unset LANG && %s' % get_devices)
-    raid_devices = int(stdout.read())
+    lines = [line.strip() for line in stdout]
+    raid_devices = int('\n'.join(lines))
     if raid_devices == 0:
         print "No MDRAID arrays found"
         sys.exit(0)
@@ -80,14 +75,16 @@ def get_raid_status(client):
     # Check if there are any missing RAID devices. If so, array must be degraded.
     get_status = "grep '\[.*_.*\]' /proc/mdstat -c"
     stdin, stdout, stderr = client.exec_command('export LC_LANG=C && unset LANG && %s' % get_status)
-    raid_status = int(stdout.read())
+    lines = [line.strip() for line in stdout]
+    raid_status = int('\n'.join(lines))
     if raid_status == 1:
         mdraid_healthy = False
 
     # Check the raid recovery (rebuild) process.
     get_recover = "grep recovery /proc/mdstat | awk '{print $4}'"
     stdin, stdout, stderr = client.exec_command('export LC_LANG=C && unset LANG && %s' % get_recover)
-    raid_recover = stdout.read()
+    lines = [line.strip() for line in stdout]
+    raid_recover = '\n'.join(lines)
     if raid_recover:
         mdraid_recover = raid_recover[:-1]
 
@@ -104,7 +101,8 @@ def get_raid_status(client):
     #get_check = "grep '\[.*>.*\]' /proc/mdstat | awk '{print $4}'"
     get_check = "grep check /proc/mdstat | awk '{print $4}'"
     stdin, stdout, stderr = client.exec_command('export LC_LANG=C && unset LANG && %s' % get_check)
-    raid_check = stdout.read()
+    lines = [line.strip() for line in stdout]
+    raid_check = '\n'.join(lines)
     if raid_check:
         mdraid_check = float(raid_check[:-2])
 
@@ -117,41 +115,22 @@ def get_raid_status(client):
 
 ###############################################################################
 
-parser = optparse.OptionParser(
-    "%prog [options]", version="%prog " + VERSION)
-parser.add_option('-H', '--hostname',
-                  dest="hostname", help='Hostname to connect to')
-parser.add_option('-i', '--ssh-key',
-                  dest="ssh_key_file", help='SSH key file to use. By default will take ~/.ssh/id_rsa.')
-parser.add_option('-u', '--user',
-                  dest="user", help='remote use to use. By default shinken.')
-parser.add_option('-P', '--passphrase',
-                  dest="passphrase", help='SSH key passphrase. By default will use void')
+parser = schecks.get_parser()
 
 if __name__ == '__main__':
     # Ok first job : parse args
     opts, args = parser.parse_args()
-    if args:
-        parser.error("Does not accept any argument.")
-
-    hostname = opts.hostname
-    if not hostname:
-        print "Error : hostname parameter (-H) is mandatory"
-        sys.exit(2)
-    port = opts.port
-    ssh_key_file = opts.ssh_key_file or os.path.expanduser('~/.ssh/id_rsa')
-    user = opts.user or 'shinken'
-    passphrase = opts.passphrase or ''
-
-    # Ok now connect, and try to get values for memory
-    client = schecks.connect(hostname, port, ssh_key_file, passphrase, user)
-
+    
+    # Ok now got an object that link to our destination
+    client = schecks.get_client(opts)
+    
     # Scrape /proc/mdstat and get result and perf data
     raid_statistics = get_raid_status(client)
+    
     recover_percent = str(raid_statistics[1])
     scrub_percent = str(raid_statistics[2])
     perf_data = "| Recover="+ recover_percent + "%;;;0%;100% Scrub="+ scrub_percent + "%;;;0%;100%"
-
+    
     if raid_statistics[0] == True:
         print "OK: RAID is healthy " + perf_data
         sys.exit(0)

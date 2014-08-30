@@ -30,6 +30,9 @@
 import os
 import sys
 import subprocess
+import optparse
+
+VERSION = 0.1
 
 try:
     import paramiko
@@ -61,6 +64,17 @@ class LocalExec(object):
             stderr = exp.__str__()
             stdout = stdin = ''
         return '',stdout.splitlines(),stderr.splitlines()
+
+def get_client(opts):
+    hostname = opts.hostname
+    port = opts.port
+    ssh_key_file = opts.ssh_key_file
+    user = opts.user
+    passphrase = opts.passphrase
+    
+    # Ok now connect, and try to get values for memory
+    client = connect(hostname, port, ssh_key_file, passphrase, user)
+    return client
     
 
 def connect(hostname, port, ssh_key_file, passphrase, user):
@@ -86,7 +100,8 @@ def connect(hostname, port, ssh_key_file, passphrase, user):
                        key_filename=ssh_key_file, password=passphrase)
     except Exception, exp:
         err = "Error : connexion failed '%s'" % exp
-        raise Exception(err)
+        print err
+        sys.exit(2)
     return client
 
 
@@ -116,3 +131,70 @@ def get_warn_crit(s_warn, s_crit):
     return warn, crit
 
 
+
+def get_parser():
+    parser = optparse.OptionParser(
+        "%prog [options]", version="%prog " + str(VERSION))
+    parser.add_option('-H', '--hostname', default='',
+                      dest="hostname", help='Hostname to connect to')
+    parser.add_option('-p', '--port',
+                      dest="port", type="int", default=22,
+                      help='SSH port to connect to. Default : 22')
+    parser.add_option('-i', '--ssh-key', default=os.path.expanduser('~/.ssh/id_rsa'),
+                      dest="ssh_key_file", help='SSH key file to use. By default will take ~/.ssh/id_rsa.')
+    parser.add_option('-u', '--user', default='shinken',
+                      dest="user", help='remote use to use. By default shinken.')
+    parser.add_option('-P', '--passphrase', default='',
+                      dest="passphrase", help='SSH key passphrase. By default will use void')
+
+    return parser
+
+
+
+
+
+class GenCheck(object):
+    def __init__(self):
+        self.output = self.perfdata = ''
+        self.exit_code = 3
+        self.parser = get_parser()
+
+    # By default do nothing
+    def fill_parser(self):
+        return
+
+
+    def parse_args(self):
+        # Ok first job : parse args
+        self.opts, self.args = self.parser.parse_args()
+    
+    
+    def check_args(self):
+        pass
+
+
+    def get_client(self):
+        # Ok now got an object that link to our destination
+        self.client = get_client(self.opts)
+        
+    
+    def do_check(self):
+        print 'Unknown: no check selected'
+        sys.exit(3)
+
+
+    def set(self, output, exit_code, perfdata=''):
+        self.output = output
+        self.perfdata = perfdata
+        self.exit_code = exit_code
+        
+        
+    def exit(self):
+        # first close the client
+        self.client.close()
+
+        if self.perfdata:
+            print '%s | %s' % (self.output, self.perfdata)
+        else:
+            print self.output
+        sys.exit(self.exit_code)

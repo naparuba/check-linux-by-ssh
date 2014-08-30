@@ -31,18 +31,8 @@
 import os
 import sys
 
-# Ok try to load our directory to load the plugin utils.
-my_dir = os.path.dirname(__file__)
-sys.path.insert(0, my_dir)
+import schecks
 
-try:
-    import schecks
-except ImportError:
-    print "ERROR : this plugin needs the local schecks.py lib. Please install it"
-    sys.exit(2)
-
-
-VERSION = "0.1"
 DEFAULT_WARNING = '75%'
 DEFAULT_CRITICAL = '90%'
 MOUNTS = None 
@@ -60,6 +50,9 @@ def convert_to(unit, value):
     return round(float(value)/(1024**power), power)
 
 
+
+
+
 def get_df(client):
     # We are looking for a line like 
     #Filesystem     Type     1K-blocks      Used Available Use% Mounted on
@@ -75,7 +68,7 @@ def get_df(client):
     # Beware of the export!
     stdin, stdout, stderr = client.exec_command('export LC_LANG=C && unset LANG && df -l -T -k -P')
     dfs = {}
-
+    
     for line in stdout:
         line = line.strip()
         # By pass the firt line, we already know about it
@@ -111,90 +104,83 @@ def get_df(client):
         mounted = ' '.join(tmp[6:])
         dfs[mounted] = {'fs':fs, 'size':size, 'used':used, 'avail':avail, 'used_pct':used_pct}
 
-    # Before return, close the client
-    client.close()
-
     return dfs
 
 
+class Check(schecks.GenCheck):
+    def fill_parser(self):
+        self.parser.add_option('-w', '--warning',
+                          dest="warning",
+                          help='Warning value for physical used memory. In percent. Default : 75%')
+        self.parser.add_option('-c', '--critical',
+                      dest="critical",
+                          help='Critical value for physical used memory. In percent. Must be '
+                          'superior to warning value. Default : 90%')
+        self.parser.add_option('-m', '--mount-points',
+                          dest="mounts",
+                          help='comma separated list of mountpoints to check. Default all mount '
+                          'points except of tmpfs types')
+        self.parser.add_option('-U', '--unit',
+                          dest="unit", help='Unit of Disk Space. B, KB, GB, TB. Default : B')
 
-
-parser = schecks.get_parser()
-## Specific options
-parser.add_option('-w', '--warning',
-                  dest="warning",
-                  help='Warning value for physical used memory. In percent. Default : 75%')
-parser.add_option('-c', '--critical',
-                  dest="critical",
-                  help='Critical value for physical used memory. In percent. Must be '
-                  'superior to warning value. Default : 90%')
-parser.add_option('-m', '--mount-points',
-                  dest="mounts",
-                  help='comma separated list of mountpoints to check. Default all mount '
-                  'points except of tmpfs types')
-parser.add_option('-U', '--unit',
-                  dest="unit", help='Unit of Disk Space. B, KB, GB, TB. Default : B')
-
-
-if __name__ == '__main__':
-    # Ok first job : parse args
-    opts, args = parser.parse_args()
     
-    if opts.mounts:
-        mounts = opts.mounts.split(',')
-        MOUNTS=mounts
+    def check_args(self):
+        global MOUNTS
+        if self.opts.mounts:
+            mounts = self.opts.mounts.split(',')
+            MOUNTS = mounts
     
-    # Try to get numeic warning/critical values
-    s_warning  = opts.warning or DEFAULT_WARNING
-    s_critical = opts.critical or DEFAULT_CRITICAL
-    warning, critical = schecks.get_warn_crit(s_warning, s_critical)
+        # Try to get numeic warning/critical values
+        s_warning  = self.opts.warning or DEFAULT_WARNING
+        s_critical = self.opts.critical or DEFAULT_CRITICAL
+        self.warning, self.critical = schecks.get_warn_crit(s_warning, s_critical)
     
-    # Get Unit 
-    s_unit = opts.unit or 'B'
-    
-    # Ok now got an object that link to our destination
-    client = schecks.get_client(opts)
-    
-    ## And get real data
-    dfs = get_df(client)
-    
-    # Maybe we failed at getting data
-    if not dfs:
-        print "Error : cannot fetch disks values from host"
-        sys.exit(2)
-    
-    perfdata = ''
-    status = 0 # all is green until it is no more ok :)
-    bad_volumes = []
-    for (mount, df) in dfs.iteritems():
-        size = convert_to(s_unit,df['size'])
-        used = convert_to(s_unit,df['used'])
-        used_pct =  df['used_pct']
-        # Let first dump the perfdata
+        # Get Unit 
+        self.s_unit = self.opts.unit or 'B'
         
-        _size_warn = convert_to(s_unit,df['size'] * float(warning)/100)
-        _size_crit = convert_to(s_unit,df['size'] * float(critical)/100)
-        
-        perfdata += '"%s_used_pct"=%s%%;%s%%;%s%%;0%%;100%% "%s_used"=%s%s;%s;%s;0;%s ' % (mount, used_pct, warning, critical, mount, used, s_unit, _size_warn, _size_crit, size)
-        
-        # And compare to limits
-        if used_pct >= critical:
-            status = 2
-            bad_volumes.append( (mount, used_pct) )
-        
-        if used_pct >= warning and status == 0:
-            status = 1
-            bad_volumes.append( (mount, used_pct) ) 
-    
-    if status == 0:
-        print "Ok: all disks are in the limits | %s" % (perfdata)
-        sys.exit(0)
-    
-    if status == 1:
-        print "Warning: some disks are not good : %s | %s" % (','.join( ["%s:%s%%" % (mount, used_pct) for (mount, used_pct) in bad_volumes]), perfdata)
-        sys.exit(1)
 
-    if status == 2:
-        print "Critical: some disks are not good : %s | %s" % (','.join( ["%s:%s%%" % (mount, used_pct) for (mount, used_pct) in bad_volumes]), perfdata)
-        sys.exit(2)
+    def do_check(self):
+        ## And get real data
+        dfs = get_df(self.client)
+    
+        # Maybe we failed at getting data
+        if not dfs:
+            print "Error : cannot fetch disks values from host"
+            sys.exit(2)
+    
+        perfdata = ''
+        status = 0 # all is green until it is no more ok :)
+        bad_volumes = []
+        for (mount, df) in dfs.iteritems():
+            size = convert_to(self.s_unit, df['size'])
+            used = convert_to(self.s_unit, df['used'])
+            used_pct =  df['used_pct']
+            # Let first dump the perfdata
+        
+            _size_warn = convert_to(self.s_unit,df['size'] * float(self.warning)/100)
+            _size_crit = convert_to(self.s_unit,df['size'] * float(self.critical)/100)
+        
+            perfdata += '"%s_used_pct"=%s%%;%s%%;%s%%;0%%;100%% "%s_used"=%s%s;%s;%s;0;%s ' % (mount, used_pct, self.warning, self.critical, mount, used, self.s_unit, _size_warn, _size_crit, size)
+        
+            # And compare to limits
+            if used_pct >= self.critical:
+                status = 2
+                bad_volumes.append( (mount, used_pct) )
+        
+            if used_pct >= self.warning and status == 0:
+                status = 1
+                bad_volumes.append( (mount, used_pct) ) 
+    
+        if status == 0:
+            self.set("Ok: all disks are in the limits", 0, perfdata)
+            return
+    
+        if status == 1:
+            output = "Warning: some disks are not good : %s" % (','.join( ["%s:%s%%" % (mount, used_pct) for (mount, used_pct) in bad_volumes]))
+            self.set(output, 1, perfdata)
+            return
 
+        if status == 2:
+            output ="Critical: some disks are not good : %s" % (','.join( ["%s:%s%%" % (mount, used_pct) for (mount, used_pct) in bad_volumes]))
+            self.set(output, 2, perfdata)
+            return

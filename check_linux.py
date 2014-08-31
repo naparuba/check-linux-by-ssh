@@ -77,7 +77,14 @@ if __name__ == '__main__':
         print "Error: no check name selected. Please list them with -l and select one with -t"
         sys.exit(2)
 
-    from checks import disks_stats as mod
+    try:
+        fname = os.path.join(my_dir, 'checks', modname+'.py')
+        mod = imp.load_source(modname, fname)
+    except (ImportError, IOError), exp:
+        print "Cannot load check %s:%s" % (modname, exp)
+        sys.exit(2)
+                         
+    #from checks import disks_stats as mod
     
     # Load it
     check = mod.Check()

@@ -26,6 +26,8 @@
 
 import os
 import sys
+import imp
+import glob
 
 # Ok try to load our directory to load the plugin utils.
 my_dir = os.path.dirname(__file__)
@@ -43,7 +45,38 @@ VERSION = "0.1"
 import optparse
 
 if __name__ == '__main__':
-    
+
+    modname = ''
+    do_list = False
+    is_next = False
+    for arg in sys.argv:
+        if arg == '-l':
+            do_list = True
+            continue
+        if arg == '-t':
+            is_next = True
+            continue
+        if is_next:
+            modname = arg
+            break
+
+    if do_list:
+        fnames = glob.glob(os.path.join(my_dir, 'checks', '*.py'))
+        for fname in fnames:
+            if fname.endswith('__init__.py'):
+                continue
+            try:
+                mod = imp.load_source(fname[:-3], fname)
+                desc = getattr(mod, 'description', 'No description')
+                print '%s : %s' % (os.path.basename(fname)[:-3], desc)
+            except ImportError, exp:
+                print "Cannot load check %s:%s" % (fname, exp)
+        sys.exit(0)
+
+    if not modname:
+        print "Error: no check name selected. Please list them with -l and select one with -t"
+        sys.exit(2)
+
     from checks import disks_stats as mod
     
     # Load it

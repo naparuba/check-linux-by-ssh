@@ -33,6 +33,8 @@ import sys
 
 import schecks
 
+description = 'Disks space check'
+
 DEFAULT_WARNING = '75%'
 DEFAULT_CRITICAL = '90%'
 MOUNTS = None 

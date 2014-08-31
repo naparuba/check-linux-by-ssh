@@ -146,6 +146,10 @@ def get_parser():
                       dest="user", help='remote use to use. By default shinken.')
     parser.add_option('-P', '--passphrase', default='',
                       dest="passphrase", help='SSH key passphrase. By default will use void')
+    parser.add_option('-t',
+                      dest="modname", help='Check to load')
+    parser.add_option('-l', action='store_true',
+                      dest="listmod", help='List all checks available')
 
     return parser
 

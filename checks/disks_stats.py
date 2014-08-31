@@ -33,7 +33,7 @@ import sys
 
 import schecks
 
-
+description = 'Disks I/O statistics'
 
 DEFAULT_WARNING = '75%'
 DEFAULT_CRITICAL = '90%'

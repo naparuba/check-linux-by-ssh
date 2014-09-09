@@ -55,7 +55,7 @@ def get_meminfo(client):
     # We are looking for a line like with value's unit forced to [KB]
     # mem: 2064856    1736636     328220          0     142880     413184
     #      TOTAL      USED        FREE          SHARED  BUF        CACHED
-    stdin, stdout, stderr = client.exec_command('free -k')
+    stdin, stdout, stderr = client.exec_command('LC_ALL=C free -k')
     total = used = free = shared = buffed = cached = 0
     for line in stdout:
         line = line.strip()

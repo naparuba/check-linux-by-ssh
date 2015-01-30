@@ -95,9 +95,25 @@ def connect(hostname, port, ssh_key_file, passphrase, user):
     client = paramiko.SSHClient()
     client.load_system_host_keys()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy()) 
+
+    ssh_config = paramiko.SSHConfig()
+    user_config_file = os.path.expanduser("~/.ssh/config")
+    if os.path.exists(user_config_file):
+        with open(user_config_file) as f:
+            ssh_config.parse(f)
+
+    cfg = {'hostname': hostname, 'port': port, 'username': user, 'key_filename': ssh_key_file, 'password': passphrase}
+
+    user_config = ssh_config.lookup(cfg['hostname'])
+    for k in ('hostname', 'port', 'username', 'key_filename', 'password'):
+        if k in user_config:
+            cfg[k] = user_config[k]
+
+    if 'proxycommand' in user_config:
+        cfg['sock'] = paramiko.ProxyCommand(user_config['proxycommand'])
+
     try:
-        client.connect(hostname, port=port, username=user,
-                       key_filename=ssh_key_file, password=passphrase)
+        client.connect(**cfg)
     except Exception, exp:
         err = "Error : connexion failed '%s'" % exp
         print err

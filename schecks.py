@@ -105,7 +105,7 @@ def connect(hostname, port, ssh_key_file, passphrase, user):
     cfg = {'hostname': hostname, 'port': port, 'username': user, 'key_filename': ssh_key_file, 'password': passphrase}
 
     user_config = ssh_config.lookup(cfg['hostname'])
-    for k in ('hostname', 'port', 'username', 'key_filename', 'password'):
+    for k in ('hostname', port, 'username', 'key_filename', 'password'):
         if k in user_config:
             cfg[k] = user_config[k]
 

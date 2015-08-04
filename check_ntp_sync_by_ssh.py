@@ -212,7 +212,7 @@ if __name__ == '__main__':
     if not chrony:
         ref_delay = get_ntp_sync(client)
 
-        if not ref_delay:
+        if ref_delay is None:
             print "Warning : There is no sync ntp server"
             sys.exit(1)
 

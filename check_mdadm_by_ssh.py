@@ -47,8 +47,8 @@ def get_raid_status(client):
     # Default values
     mdraid_healthy = True
     mdraid_recover = '100'
-    mdraid_check = '100'
-    mdraid_sync = '100'
+    mdraid_check = '0'
+    mdraid_sync = '0'
 
     # Try to read in the mdstat file contents.
     cat_mdstat = 'cat /proc/mdstat'
@@ -97,9 +97,13 @@ if __name__ == '__main__':
     # Scrape /proc/mdstat and get result and perf data
     healthy, recover, scrub, sync = get_raid_status(client)
     # Format perf data
-    perf = "| Recover={}%;0%;100% Scrub={}%;0%;100% Sync={}%;0%;100%".format(recover, scrub, sync)
+    perf = "|Recover={0}%;0%;100% Scrub={1}%;0%;100% Sync={2}%;0%;100%".format(recover, scrub, sync)
 
-    if healthy:
+    if not float(recover) == 100:
+        print("WARNING: RAID is recovering " + perf)
+        sys.exit(1)
+    elif healthy:
+        print(float(recover) == 100)
         print "OK: RAID is healthy " + perf
         sys.exit(0)
     else:

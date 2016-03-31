@@ -103,7 +103,6 @@ if __name__ == '__main__':
         print("WARNING: RAID is recovering " + perf)
         sys.exit(1)
     elif healthy:
-        print(float(recover) == 100)
         print "OK: RAID is healthy " + perf
         sys.exit(0)
     else:

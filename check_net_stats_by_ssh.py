@@ -107,7 +107,7 @@ def get_net_stats(client):
         tmp = line.split(':', 1)
         ifname = tmp[0]
         # We don't care about lo
-        if ifname.startswith('lo'):
+        if ifname.startswith('lo') or ifname.startswith(tuple(excluded_interfaces)):
             continue
         values = tmp[1]
 
@@ -120,7 +120,7 @@ def get_net_stats(client):
 
     # Before return, close the client
     client.close()
-        
+
     return diff, stats
 
 
@@ -149,6 +149,10 @@ parser.add_option('-c', '--critical',
     dest="critical",
     help='Critical value for physical used memory. In percent. Must be '
         'superior to warning value. Default : 90%')
+parser.add_option('-e', '--exclude',
+    action="append",
+    dest="exclude",
+    help='Interfaces to exclude. Can appear several time.')
 
 
 if __name__ == '__main__':
@@ -168,6 +172,9 @@ if __name__ == '__main__':
     s_warning  = opts.warning or DEFAULT_WARNING
     s_critical = opts.critical or DEFAULT_CRITICAL
     warning, critical = schecks.get_warn_crit(s_warning, s_critical)
+
+    # Get list of excluded interfaces
+    excluded_interfaces = opts.exclude
 
     # Ok now connect, and try to get values for memory
     client = schecks.connect(hostname, port, ssh_key_file, passphrase, user)

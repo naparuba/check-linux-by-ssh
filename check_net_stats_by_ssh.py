@@ -107,7 +107,7 @@ def get_net_stats(client):
         tmp = line.split(':', 1)
         ifname = tmp[0]
         # We don't care about lo
-        if ifname.startswith('lo') or ifname.startswith(tuple(excluded_interfaces)):
+        if ifname.startswith('lo') or (excluded_interfaces is not None and ifname.startswith(tuple(excluded_interfaces))):
             continue
         values = tmp[1]
 

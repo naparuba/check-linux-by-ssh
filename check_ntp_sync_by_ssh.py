@@ -212,7 +212,7 @@ if __name__ == '__main__':
     if not chrony:
         ref_delay = get_ntp_sync(client)
 
-        if not ref_delay:
+        if ref_delay is None:
             print "Warning : There is no sync ntp server"
             sys.exit(1)
 
@@ -230,7 +230,7 @@ if __name__ == '__main__':
     else:
         delay, offset = get_chrony_sync(client)
 
-        if not delay or not offset:
+        if delay is None or offset is None:
             print "Warning : cannot get delay or offset value"
             sys.exit(1)
 

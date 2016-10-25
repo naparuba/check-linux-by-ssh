@@ -86,8 +86,13 @@ def get_df(client):
         tmp = [s for s in line.split(' ') if s]
         
         _type = tmp[1]
-        # Ok maybe we got a none or tmpfs system, if so, bailout
-        if _type in ['tmpfs', 'devtmpfs', 'iso9660']:
+        # Ok maybe we got a none, iso9660 or devtmpfs system, if so, bailout
+        if _type in ['devtmpfs', 'iso9660']:
+            continue
+
+        # Exclude /dev/ /sys/ and /run/ folder
+        mounted = ' '.join(tmp[6:])
+        if mounted.startswith('/run/') or mounted.startswith('/sys/') or mounted.startswith('/dev/'):
             continue
 
         #if we specify a list of mountpoints to check then verify that current line is in the list
@@ -108,7 +113,6 @@ def get_df(client):
         used = int(tmp[3])*1024
         avail = int(tmp[4])*1024
         used_pct = int(tmp[5][:-1]) # we remove the %
-        mounted = ' '.join(tmp[6:])
         dfs[mounted] = {'fs':fs, 'size':size, 'used':used, 'avail':avail, 'used_pct':used_pct}
 
     # Before return, close the client
@@ -131,7 +135,7 @@ parser.add_option('-c', '--critical',
 parser.add_option('-m', '--mount-points',
                   dest="mounts",
                   help='comma separated list of mountpoints to check. Default all mount '
-                  'points except of tmpfs types')
+                  'points except if mounted in /dev, /sys and /run')
 parser.add_option('-U', '--unit',
                   dest="unit", help='Unit of Disk Space. B, KB, GB, TB. Default : B')
 

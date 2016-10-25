@@ -153,7 +153,7 @@ if __name__ == '__main__':
         perfdata += ' %s=%s%%;%s;%s;0%%;100%%' % (k, int(100 * float(v)/total), _warn, _crit)
 
     # Add swap if required (actually no check supported)
-    if opts.swap :
+    if opts.swap and swap_total > 0:
         d_swap = {'swap_used':swap_used, 'swap_free':swap_free}
         for (k,v) in d_swap.iteritems():
             perfdata += ' %s=%s%%;;;0%%;100%%' % (k, int(100 * float(v)/swap_total) if swap_total else 0)
@@ -164,7 +164,7 @@ if __name__ == '__main__':
         d['total']=total
         for (k,v) in d.iteritems():
             perfdata += ' %s=%sKB;;;0KB;%sKB' % (k+'_abs', v, total) 
-        if opts.swap:
+        if opts.swap and swap_total > 0:
             d_swap['swap_total']=swap_total
             for (k,v) in d_swap.iteritems():
                 perfdata += ' %s=%sKB;;;0KB;%sKB' % (k, v, swap_total) 

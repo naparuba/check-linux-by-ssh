@@ -53,7 +53,7 @@ def get_fs(client):
     # We are looking for such lines:
     #/dev/sda5 /media/ntfs fuseblk rw,nosuid,nodev,noexec,relatime,user_id=0,group_id=0,default_permissions,allow_other,blksize=4096 0 0
     #/dev/sdb1 /media/bigdata ext3 rw,relatime,errors=continue,barrier=1,data=ordered 0 0
-    
+
     # Beware of the export!
     stdin, stdout, stderr = client.exec_command('export LC_LANG=C && unset LANG && grep ^/dev < /proc/mounts')
 
@@ -66,13 +66,13 @@ def get_fs(client):
             continue
         tmp = line.split(' ')
         opts = tmp[3]
-        if 'ro' in opts.split(','):
+        if 'ro' in opts.split(',') and tmp[1] not in excluded_mountpoint:
             name = tmp[1]
             bad_fs.append(name)
 
     # Before return, close the client
     client.close()
-            
+
     return bad_fs
 
 
@@ -95,6 +95,10 @@ parser.add_option('-u', '--user',
 parser.add_option('-P', '--passphrase',
     dest="passphrase",
     help='SSH key passphrase. By default will use void')
+parser.add_option('-e', '--exclude',
+    action="append",
+    dest="exclude",
+    help='Mount point to exclude. Can appear several time.')
 parser.add_option('-w', '--warning',
     dest="warning",
     help='Warning value for physical used memory. In percent. Default : 75%')
@@ -116,11 +120,12 @@ if __name__ == '__main__':
     ssh_key_file = opts.ssh_key_file or os.path.expanduser('~/.ssh/id_rsa')
     user = opts.user or 'shinken'
     passphrase = opts.passphrase or ''
+    excluded_mountpoint = tuple() if opts.exclude is None else tuple(opts.exclude)
 
     # Ok now connect, and try to get values for memory
     client = schecks.connect(hostname, port, ssh_key_file, passphrase, user)
     bad_fs = get_fs(client)
-    
+
     if len(bad_fs) == 0:
         print "OK : no read only file system"
         sys.exit(0)

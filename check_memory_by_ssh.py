@@ -156,7 +156,11 @@ if __name__ == '__main__':
     if opts.swap and swap_total > 0:
         d_swap = {'swap_used':swap_used, 'swap_free':swap_free}
         for (k,v) in d_swap.iteritems():
-            perfdata += ' %s=%s%%;;;0%%;100%%' % (k, int(100 * float(v)/swap_total) if swap_total else 0)
+            ## manage division by zero, this is if the host doesn't have swap
+            try:
+                perfdata += ' %s=%s%%;;;0%%;100%%' % (k, int(100 * float(v)/swap_total))
+            except ZeroDivisionError:
+                print('The server either not have swap or that partition isn\'t mounted!')
     
     
     # Add measurement if required (actually no check supported) + total

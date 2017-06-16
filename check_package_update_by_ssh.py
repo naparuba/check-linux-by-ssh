@@ -56,6 +56,12 @@ def get_package_update_debian(client):
     _, security_updates, _ = client.exec_command(security_upgrades_cmd)
     _, all_upgrades, _ = client.exec_command(all_upgrades_cmd)
 
+    # Localhost request return list object
+    if not isinstance(security_updates, list):
+        security_updates = security_updates.read().strip()
+        all_upgrades = all_upgrades.read().strip()
+
+
     # Before return, close the client
     client.close()
 
@@ -65,8 +71,10 @@ def get_package_update_yum(client):
     _, security_updates, _ = client.exec_command("yum list-sec updates --security --quiet |wc -l")
     _, all_upgrades, _ = client.exec_command("yum  list  updates --quiet |grep -v 'Updated Packages' |wc -l")
 
-    security_updates = security_updates.read().strip()
-    all_upgrades = all_upgrades.read().strip()
+    # Localhost request return list object
+    if not isinstance(security_updates, list):
+        security_updates = security_updates.read().strip()
+        all_upgrades = all_upgrades.read().strip()
 
     # Before return, close the client
     client.close()

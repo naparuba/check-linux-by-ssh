@@ -145,6 +145,8 @@ if __name__ == '__main__':
     # Ok now connect, and try to get values for memory
     client = schecks.connect(hostname, port, ssh_key_file, passphrase, user)
     security_updates, all_upgrades = get_package_update(client)
+    security_updates = int(security_updates)
+    all_upgrades = int(all_upgrades)
 
     status = 0
     # check warning threshold

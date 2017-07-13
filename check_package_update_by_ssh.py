@@ -148,9 +148,9 @@ if __name__ == '__main__':
 
     status = 0
     # check warning threshold
-    if ( warning[0] != -1 and warning[0] < security_updates ) or ( warning[1] != -1 and warning[1] < all_upgrades ):
+    if ( warning[0] != -1 and warning[0] > security_updates ) or ( warning[1] != -1 and warning[1] > all_upgrades ):
         status = 1
-    if ( critical[0] != -1 and critical[0] < security_updates ) or ( critical[1] != -1 and critical[1] < all_upgrades ):
+    if ( critical[0] != -1 and critical[0] > security_updates ) or ( critical[1] != -1 and critical[1] > all_upgrades ):
         status = 2
 
     perfdata = ''

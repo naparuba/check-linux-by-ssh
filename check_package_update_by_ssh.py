@@ -60,12 +60,14 @@ def get_package_update_debian(client):
     if not isinstance(security_updates, list):
         security_updates = security_updates.read().strip()
         all_upgrades = all_upgrades.read().strip()
-
+    else:
+        security_updates = security_updates[0]
+        all_upgrades = all_upgrades[0]
 
     # Before return, close the client
     client.close()
 
-    return security_updates[0], all_upgrades[0]
+    return security_updates, all_upgrades
 
 def get_package_update_yum(client):
     _, security_updates, _ = client.exec_command("yum list-sec updates --security --quiet |wc -l")

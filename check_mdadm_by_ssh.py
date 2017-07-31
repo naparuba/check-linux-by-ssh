@@ -25,12 +25,10 @@
 #
 
 
-'''
- This script is a check for Linux RAID status via /proc/mdstat.
-'''
+"""This script checks Linux RAID status via /proc/mdstat. """
 import os
 import sys
-import optparse
+
 
 # Ok try to load our directory to load the plugin utils.
 my_dir = os.path.dirname(__file__)
@@ -42,76 +40,48 @@ except ImportError:
     print "ERROR : this plugin needs the local schecks.py lib. Please install it"
     sys.exit(2)
 
-VERSION = "0.1"
+VERSION = "0.3"
+
 
 def get_raid_status(client):
-
     # Default values
     mdraid_healthy = True
-    #mdraid_resync = 100.0
-    mdraid_recover = 100.0
-    mdraid_check = 100.0
+    mdraid_recover = '100'
+    mdraid_check = '0'
+    mdraid_sync = '0'
 
-    # Check if /proc/mdstat exists or not.
-    # Result will be empty IF /proc/mdstat is found.
-    check_mdstat = 'test -f /proc/mdstat || echo "null"'
-    stdin, stdout, stderr = client.exec_command('export LC_LANG=C && unset LANG && %s' % check_mdstat)
-    lines = [line.strip() for line in stdout]
-    
-    if 'null' in lines:
-        print "No MDRAID arrays found"
+    # Try to read in the mdstat file contents.
+    cat_mdstat = 'cat /proc/mdstat'
+    stdin, stdout, stderr = client.exec_command('export LC_LANG=C && unset LANG && %s' % cat_mdstat)
+    if stderr.read():
+        print 'No MDRAID arrays found'
         sys.exit(0)
+    else:
+        mdadm_lines = [line.strip() for line in stdout]
 
     # Sometimes a /proc/mdstat will exist, even when there are no active arrays.
     # Check to see if any md* arrays exist.
-    get_devices = 'grep ^md -c /proc/mdstat'
-    stdin, stdout, stderr = client.exec_command('export LC_LANG=C && unset LANG && %s' % get_devices)
-    lines = [line.strip() for line in stdout]
-    raid_devices = int('\n'.join(lines))
-    if raid_devices == 0:
-        print "No MDRAID arrays found"
+    if not any('md' in line for line in mdadm_lines):
+        print 'No active MDRAID arrays found'
         sys.exit(0)
 
     # Check if there are any missing RAID devices. If so, array must be degraded.
-    get_status = "grep '\[.*_.*\]' /proc/mdstat -c"
-    stdin, stdout, stderr = client.exec_command('export LC_LANG=C && unset LANG && %s' % get_status)
-    lines = [line.strip() for line in stdout]
-    raid_status = int('\n'.join(lines))
-    if raid_status == 1:
+    if any('_' in line for line in mdadm_lines):
         mdraid_healthy = False
 
-    # Check the raid recovery (rebuild) process.
-    get_recover = "grep recovery /proc/mdstat | awk '{print $4}'"
-    stdin, stdout, stderr = client.exec_command('export LC_LANG=C && unset LANG && %s' % get_recover)
-    lines = [line.strip() for line in stdout]
-    raid_recover = '\n'.join(lines)
-    if raid_recover:
-        mdraid_recover = raid_recover[:-1]
-
-    """
-    # Check the raid resync status.
-    get_resync = "grep resync /proc/mdstat | awk '{print $4}'"
-    stdin, stdout, stderr = client.exec_command('export LC_LANG=C && unset LANG && %s' % get_resync)
-    raid_resync = stdout.read()
-    if raid_resync:
-        mdraid_resync = raid_resync
-    """
-
-    # Check the RAID scrub status
-    #get_check = "grep '\[.*>.*\]' /proc/mdstat | awk '{print $4}'"
-    get_check = "grep check /proc/mdstat | awk '{print $4}'"
-    stdin, stdout, stderr = client.exec_command('export LC_LANG=C && unset LANG && %s' % get_check)
-    lines = [line.strip() for line in stdout]
-    raid_check = '\n'.join(lines)
-    if raid_check:
-        mdraid_check = float(raid_check[:-2])
-
-    raid_stats = [mdraid_healthy, mdraid_recover, mdraid_check]
+    # Check the RAID scrub, sync, and recover status.
+    for line in mdadm_lines:
+        if 'check' in line:
+            mdraid_check = line.split()[3][:-1]
+        elif 'sync' in line:
+            mdraid_sync = line.split()[3][:-1]
+        elif 'recover' in line:
+            mdraid_recover = line.split()[3][:-1]
 
     # Before return, close the client
     client.close()
 
-    return raid_stats
+    return mdraid_healthy, mdraid_recover, mdraid_check, mdraid_sync
 
 ###############################################################################
 
@@ -125,16 +95,16 @@ if __name__ == '__main__':
     client = schecks.get_client(opts)
     
     # Scrape /proc/mdstat and get result and perf data
-    raid_statistics = get_raid_status(client)
-    
-    recover_percent = str(raid_statistics[1])
-    scrub_percent = str(raid_statistics[2])
-    perf_data = "| Recover="+ recover_percent + "%;;;0%;100% Scrub="+ scrub_percent + "%;;;0%;100%"
-    
-    if raid_statistics[0] == True:
-        print "OK: RAID is healthy " + perf_data
+    healthy, recover, scrub, sync = get_raid_status(client)
+    # Format perf data
+    perf = "|Recover={0}%;0%;100% Scrub={1}%;0%;100% Sync={2}%;0%;100%".format(recover, scrub, sync)
+
+    if not float(recover) == 100:
+        print("WARNING: RAID is recovering " + perf)
+        sys.exit(1)
+    elif healthy:
+        print "OK: RAID is healthy " + perf
         sys.exit(0)
     else:
-        print "CRITICAL: RAID is degraded " + perf_data
+        print "CRITICAL: RAID is degraded " + perf
         sys.exit(2)
-    sys.exit(0)
